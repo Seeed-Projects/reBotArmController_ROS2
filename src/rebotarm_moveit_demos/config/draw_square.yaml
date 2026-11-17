@@ -12,6 +12,14 @@ draw_square:
       - joint6
     max_wrap_joint_delta: 3.0
 
+    gripper_action_name: /gripper_controller/follow_joint_trajectory
+    hardware_gripper_action_name: /rebotarm/gripper/command
+    gripper_joint_names: [finger_left]
+    closed_gripper_position: 0.0
+    hardware_closed_gripper_position: 0.0
+    gripper_motion_duration: 1.0
+    gripper_max_effort: 10.0
+
     frame_id: base_link
     tcp_link_name: gripper_tcp
     start_point: [0.0, -0.75, -0.55, 0.0, 0.0, 0.0]

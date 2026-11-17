@@ -208,7 +208,9 @@ class HardwareManager:
         if not self._connected:
             return
         try:
-            self.safe_home()
+            # Do not re-enable motors that were already disabled by a client.
+            if self._enabled:
+                self.safe_home()
             with self._cmd_lock:
                 self._robot.stop_control_loop()
 
@@ -456,7 +458,8 @@ class HardwareManager:
             raise RuntimeError(
                 f"rejecting gravity compensation in state {self._state_machine}"
             )
-        self.stop_gravity_compensation()
+        if self._gravity_comp_active:
+            return
         if not self._enabled:
             self._arm_group.enable()
             if self.has_gripper:
@@ -469,15 +472,24 @@ class HardwareManager:
         self._gravity_comp_q_last = self._arm_group.get_positions(
             request_feedback=True,
         ).copy()
-        self._arm_group.mode_mit(
-            kp=self._gravity_comp_kp,
-            kd=self._gravity_comp_kd,
-        )
-        if self.has_gripper:
+        # MIT gains are supplied by every gravity-compensation command. When
+        # the groups are already in MIT mode, keep the motors enabled instead
+        # of reconfiguring the same mode and cycling their power state.
+        mode_changed = False
+        if self._arm_group.mode != "mit":
+            self._arm_group.mode_mit(
+                kp=self._gravity_comp_kp,
+                kd=self._gravity_comp_kd,
+            )
+            mode_changed = True
+        if self.has_gripper and self._gripper_group.mode != "mit":
             self._gripper_group.mode_mit()
-        self._robot.disable_all()
-        time.sleep(0.1)
-        self._robot.enable_all()
+            mode_changed = True
+        if mode_changed:
+            # Preserve the existing transition for position/velocity hardware.
+            self._robot.disable_all()
+            time.sleep(0.1)
+            self._robot.enable_all()
         self._enabled = True
         self._gravity_comp_active = True
         arm_rate = float(getattr(self._robot, "_rate", 500.0))

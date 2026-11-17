@@ -63,6 +63,13 @@ class JointStatePublisher:
             callback_group=node.reentrant_group,
         )
         self.publish_status()
+        # Refresh live status for late subscribers, including a plain topic echo.
+        # Keep transient-local durability for existing latched subscribers.
+        self._status_timer = node.create_timer(
+            1.0,
+            self.publish_status,
+            callback_group=node.reentrant_group,
+        )
 
     def publish(self) -> None:
         try:
