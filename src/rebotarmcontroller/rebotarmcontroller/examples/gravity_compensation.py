@@ -4,13 +4,17 @@
 from __future__ import annotations
 
 import signal
+import time
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
+from rebotarm_msgs.msg import ArmStatus
 from rclpy.signals import SignalHandlerOptions
 from std_srvs.srv import Trigger
 
 _NAMESPACE = "rebotarm"
+_CONTROLLER_TIMEOUT_SEC = 3.0
 
 
 def _call_trigger(
@@ -69,6 +73,19 @@ def main() -> None:
         f"/{_NAMESPACE}/disable",
     )
 
+    last_status_received = time.monotonic()
+
+    def receive_status(_message: ArmStatus) -> None:
+        nonlocal last_status_received
+        last_status_received = time.monotonic()
+
+    node.create_subscription(
+        ArmStatus,
+        f"/{_NAMESPACE}/arm_status",
+        receive_status,
+        qos_profile_sensor_data,
+    )
+    controller_lost = False
     gc_started = False
     try:
         if not _call_trigger(node, enable_client, "enable"):
@@ -80,11 +97,24 @@ def main() -> None:
         ):
             raise SystemExit(1)
         gc_started = True
+        last_status_received = time.monotonic()
         node.get_logger().info("press Ctrl+C to stop gravity compensation")
         while rclpy.ok() and not stop_requested:
             rclpy.spin_once(node, timeout_sec=0.2)
+            if (
+                not start_client.service_is_ready()
+                or time.monotonic() - last_status_received >= _CONTROLLER_TIMEOUT_SEC
+            ):
+                controller_lost = True
+                node.get_logger().warn(
+                    "Controller is unavailable or its status heartbeat stopped; "
+                    "exiting gravity compensation client"
+                )
+                break
     finally:
-        if gc_started:
+        # The controller owns shutdown homing/disable. Do not issue duplicate
+        # cleanup requests after it has disappeared or begun shutting down.
+        if gc_started and not controller_lost:
             try:
                 _call_trigger(node, safe_home_client, "safe_home", timeout_sec=35.0)
             except Exception as exc:

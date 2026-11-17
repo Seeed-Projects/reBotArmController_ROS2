@@ -26,16 +26,25 @@ Visualization Manager:
       Name: PlanningScene
       Planning Scene Topic: /monitored_planning_scene
       Robot Description: robot_description
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: RectangleTrace
+      Topic:
+        Depth: 1
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /draw_square/markers
     - Acceleration_Scaling_Factor: 0.2
       Class: moveit_rviz_plugin/MotionPlanning
-      Enabled: false
+      Enabled: true
       Move Group Namespace: ""
       MoveIt_Planning_Attempts: 10
       MoveIt_Planning_Time: 5
       Name: MotionPlanning
       Planning Request:
         Planning Group: arm
-        Query Goal State: false
+        Query Goal State: true
         Query Start State: false
       Planning Scene Topic: /monitored_planning_scene
       Robot Description: robot_description
