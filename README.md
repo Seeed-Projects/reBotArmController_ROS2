@@ -35,6 +35,8 @@ wraps the current `reBotArm_control_py` Python control library into ROS2 topics,
 services and actions, providing a unified entry point for development, planning,
 RViz visualization, gravity compensation and per-motor debugging.
 
+The current RS URDF uses measured masses and centers of mass. The model totals 6.5503 kg. Each gripper finger weighs 55.9 g and has 0–50 mm of travel. [URDF source](src/rebotarm_bringup/description/RS/urdf/ReBot_Arm_RS.urdf)
+
 The workspace contains five ROS2 packages:
 
 | Package | Purpose |

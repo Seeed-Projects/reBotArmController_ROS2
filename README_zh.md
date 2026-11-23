@@ -34,6 +34,8 @@
 `reBotArm_control_py` Python 控制库封装为 ROS2 topic、service 和 action，
 作为二次开发、上层规划、可视化、重力补偿和单电机调试的统一入口。
 
+当前 RS URDF 使用实测质量和质心。模型总质量为 6.5503 kg，每侧夹爪手指为 55.9 g，滑动行程各为 0–50 mm。 [URDF 源文件](src/rebotarm_bringup/description/RS/urdf/ReBot_Arm_RS.urdf)
+
 当前工作空间包含五个 ROS2 包：
 
 | 包 | 作用 |
