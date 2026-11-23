@@ -723,3 +723,59 @@ To temporarily avoid shared-memory transport before launching ROS2:
 ```bash
 export FASTDDS_BUILTIN_TRANSPORTS=UDPv4
 ```
+
+## Controller lifecycle and rectangle visualization
+
+The controller publishes `/rebotarm/arm_status` every second in addition to
+startup and state changes. Read one status without additional QoS flags:
+
+```bash
+ros2 topic echo /rebotarm/arm_status --once
+```
+
+Starting gravity compensation while the arm is already enabled in MIT mode
+preserves motor enable state. Position/velocity-to-MIT transitions retain the
+existing mode-switch sequence. Repeated gravity-compensation start requests
+leave the active loop running. The example exits when the controller disappears
+or its status heartbeat is absent for three seconds; Ctrl+C in the example still
+requests safe home followed by disable. Controller shutdown skips safe home when
+a client has already disabled the motors.
+
+The rectangle demo closes the gripper before moving. RViz displays a cyan
+rectangle reference and a yellow trace sampled from the actual `gripper_tcp` TF
+on `/draw_square/markers`. The trace starts after reaching the first corner;
+corner-to-corner joint-space planning does not guarantee straight Cartesian
+edges. A new run clears the previous trace.
+
+In RViz, disable both **Query Start State** and **Query Goal State** under
+**Displays → MotionPlanning → Planning Request** to hide the interactive sphere
+and rings while scripts run. Keep **PlanningScene** and **RectangleTrace**
+enabled. With an older RViz session, add a **MarkerArray** display and set its
+**Topic** to `/draw_square/markers`. Re-enable **Query Goal State** for manual
+interactive planning.
+
+### Optional Humble 2.5.10 RViz backport
+
+`tools/patches/moveit2-humble-goal-state.patch` backports
+[MoveIt #3886](https://github.com/moveit/moveit2/pull/3886) to keep the Joints tab
+editing the goal after execution. It does not relax trajectory start tolerance.
+Install the compatible visualization overlay once:
+
+```bash
+source /opt/ros/humble/setup.bash
+git clone --depth 1 --branch 2.5.10 --filter=blob:none --sparse \
+  https://github.com/moveit/moveit2.git third_party/moveit2_rviz_compat
+git -C third_party/moveit2_rviz_compat sparse-checkout set moveit_ros/visualization
+git -C third_party/moveit2_rviz_compat apply \
+  "$PWD/tools/patches/moveit2-humble-goal-state.patch"
+CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --symlink-install \
+  --base-paths src/rebotarm_bringup src/rebotarm_moveit_config \
+    third_party/moveit2_rviz_compat/moveit_ros/visualization \
+  --packages-select rebotarm_bringup rebotarm_moveit_config moveit_ros_visualization \
+  --allow-overriding moveit_ros_visualization \
+  --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
+```
+
+After restarting RViz, select `<current>` as the start state, then select the
+goal. Confirm the Joints tab says **Group joints of goal state** before editing.

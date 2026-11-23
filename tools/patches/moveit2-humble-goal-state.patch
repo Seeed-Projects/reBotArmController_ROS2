@@ -1,0 +1,31 @@
+diff --git a/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_joints_widget.cpp b/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_joints_widget.cpp
+index 04e6e38..51a6886 100644
+--- a/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_joints_widget.cpp
++++ b/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_joints_widget.cpp
+@@ -262,6 +262,8 @@ void MotionPlanningFrameJointsWidget::queryGoalStateChanged()
+
+ void MotionPlanningFrameJointsWidget::setActiveModel(JMGItemModel* model)
+ {
++  if (ui_->joints_view_->model() == model)
++    return;
+   ui_->joints_view_->setModel(model);
+   ui_->joints_view_label_->setText(
+       QString("Group joints of %1 state").arg(model == start_state_model_.get() ? "start" : "goal"));
+diff --git a/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_planning.cpp b/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_planning.cpp
+index d79f388..beea9d1 100644
+--- a/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_planning.cpp
++++ b/moveit_ros/visualization/motion_planning_rviz_plugin/src/motion_planning_frame_planning.cpp
+@@ -256,10 +256,9 @@ void MotionPlanningFrame::onFinishedExecution(bool success)
+   if (ui_->start_state_combo_box->currentText() == "<current>")
+     startStateTextChanged(ui_->start_state_combo_box->currentText());
+
+-  // auto-update goal to stored previous state (but only on success)
+-  // on failure, the user must update the goal to the previous state himself
+-  if (ui_->goal_state_combo_box->currentText() == "<previous>")
+-    goalStateTextChanged(ui_->goal_state_combo_box->currentText());
++  // Refresh the goal after the start so the Joints tab edits the goal model.
++  // Backport of moveit/moveit2#3886 to Humble 2.5.10.
++  goalStateTextChanged(ui_->goal_state_combo_box->currentText());
+ }
+
+ void MotionPlanningFrame::onNewPlanningSceneState()
