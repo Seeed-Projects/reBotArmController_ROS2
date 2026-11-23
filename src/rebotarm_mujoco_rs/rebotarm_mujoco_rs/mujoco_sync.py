@@ -4,7 +4,9 @@ from contextlib import nullcontext
 import json
 from pathlib import Path
 import time
+import xml.etree.ElementTree as ET
 
+from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 import mujoco
 import numpy as np
 import rclpy
@@ -17,31 +19,40 @@ from std_srvs.srv import Trigger
 
 
 _ARM_JOINTS = tuple(f"joint{index}" for index in range(1, 7))
-_RS_ROS_VISUAL_OPEN_M = 0.045
 _LEGACY_VISUAL_OPEN_M = 0.0285
 _MUJOCO_GRIPPER_OPEN_M = 0.05
-_UPSTREAM_RELATIVE_MODEL = Path(
-    "third_party/reBot-B601-RS-for-mujoco_sim/"
-    "assets/00_arm_rs_asm_v3/scene.xml"
-)
 _GRASP_SCENE_NAME = "rs_grasp_scene.xml"
+_SOURCE_SCENE = Path(__file__).resolve().parents[1] / "models" / _GRASP_SCENE_NAME
 _DEFAULT_OBJECTS = ("red_cube", "blue_block", "yellow_cylinder")
 
 
 def find_default_model() -> Path:
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        grasp_scene = parent / "models" / _GRASP_SCENE_NAME
-        if grasp_scene.is_file():
-            return grasp_scene
-    for parent in here.parents:
-        candidate = parent / _UPSTREAM_RELATIVE_MODEL
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(
-        "B601-RS MuJoCo model was not found. "
-        "Run scripts/setup_rs_workspace.sh or pass model_path explicitly."
-    )
+    try:
+        installed = Path(get_package_share_directory("rebotarm_mujoco_rs")) / "models" / _GRASP_SCENE_NAME
+        if installed.is_file():
+            return installed
+    except PackageNotFoundError:
+        pass
+    if _SOURCE_SCENE.is_file():
+        return _SOURCE_SCENE
+    raise FileNotFoundError("Bundled B601-RS MuJoCo scene not found. Build rebotarm_mujoco_rs or set model_path.")
+
+
+def load_model(path: Path) -> mujoco.MjModel:
+    # The bundled scene and arm XML live in rebotarm_mujoco_rs. The meshes
+    # already installed by rebotarm_bringup are shared with its RS URDF.
+    path = path.resolve()
+    if path.name != _GRASP_SCENE_NAME or path not in (
+        _SOURCE_SCENE.resolve(), find_default_model().resolve()
+    ):
+        return mujoco.MjModel.from_xml_path(str(path))
+    mesh_dir = path.parents[2] / "rebotarm_bringup" / "description" / "RS" / "meshes"
+    if not mesh_dir.is_dir():
+        mesh_dir = Path(get_package_share_directory("rebotarm_bringup")) / "description" / "RS" / "meshes"
+    arm = ET.parse(path.with_name("rs_arm.xml"))
+    files = {mesh.attrib["file"] for mesh in arm.findall("./asset/mesh")}
+    assets = {f"meshes/{name}": (mesh_dir / name).read_bytes() for name in files}
+    return mujoco.MjModel.from_xml_path(str(path), assets)
 
 
 class RsMujocoSync(Node):
@@ -102,7 +113,7 @@ class RsMujocoSync(Node):
         self.gripper_kd = float(self.get_parameter("gripper_kd").value)
         self.gripper_tau_limit = float(self.get_parameter("gripper_tau_limit").value)
 
-        self.model = mujoco.MjModel.from_xml_path(str(self.model_path))
+        self.model = load_model(self.model_path)
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
         self.arm_joint_ids = np.array(
@@ -210,7 +221,7 @@ class RsMujocoSync(Node):
 
         if "gripper_joint1" in values:
             self.target_gripper = self._visual_to_mujoco_gripper(
-                values["gripper_joint1"], _RS_ROS_VISUAL_OPEN_M
+                values["gripper_joint1"], _MUJOCO_GRIPPER_OPEN_M
             )
         elif "finger_left" in values:
             self.target_gripper = self._visual_to_mujoco_gripper(

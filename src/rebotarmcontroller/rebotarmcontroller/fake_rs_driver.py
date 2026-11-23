@@ -30,7 +30,7 @@ _JOINT_LIMITS = (
     (-1.57, 1.57),
     (-3.14, 3.14),
 )
-_GRIPPER_VISUAL_HALF_OPEN_M = 0.045
+_GRIPPER_VISUAL_HALF_OPEN_M = 0.05
 
 
 class FakeRsDriver(Node):

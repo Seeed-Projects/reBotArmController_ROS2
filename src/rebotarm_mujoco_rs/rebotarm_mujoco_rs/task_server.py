@@ -26,7 +26,7 @@ from sensor_msgs.msg import JointState
 from std_srvs.srv import Trigger
 from trajectory_msgs.msg import JointTrajectoryPoint
 
-from .mujoco_sync import find_default_model
+from .mujoco_sync import find_default_model, load_model
 
 
 _ARM_JOINTS = tuple(f"joint{index}" for index in range(1, 7))
@@ -101,7 +101,7 @@ class RsTaskServer(Node):
             if requested_model
             else find_default_model()
         )
-        self.model = mujoco.MjModel.from_xml_path(str(self.model_path))
+        self.model = load_model(self.model_path)
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
         self.base_qpos = self.data.qpos.copy()

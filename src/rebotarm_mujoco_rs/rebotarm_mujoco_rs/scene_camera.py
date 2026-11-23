@@ -14,7 +14,7 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import CameraInfo, Image, JointState
 from std_msgs.msg import String
 
-from .mujoco_sync import find_default_model
+from .mujoco_sync import find_default_model, load_model
 
 
 _ARM_JOINTS = tuple(f"joint{index}" for index in range(1, 7))
@@ -67,7 +67,7 @@ class RsSceneCamera(Node):
         self.height = max(int(self.get_parameter("height").value), 64)
         publish_hz = max(float(self.get_parameter("publish_hz").value), 0.5)
 
-        self.model = mujoco.MjModel.from_xml_path(str(self.model_path))
+        self.model = load_model(self.model_path)
         self.data = mujoco.MjData(self.model)
         self.joint_qpos = {
             name: self._joint_qpos_addr(name)

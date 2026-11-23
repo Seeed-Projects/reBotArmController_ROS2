@@ -1,6 +1,5 @@
 <mujoco model="rebot_rs_grasp_scene">
-  <include file="../../../third_party/reBot-B601-RS-for-mujoco_sim/assets/00_arm_rs_asm_v3/00_arm_rs_asm_v3.xml"/>
-  <compiler angle="radian" meshdir="../../../third_party/reBot-B601-RS-for-mujoco_sim/assets/00_arm_rs_asm_v3/meshes/"/>
+  <include file="rs_arm.xml"/>
 
   <option timestep="0.001" iterations="100" solver="Newton" integrator="Euler"/>
 

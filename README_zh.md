@@ -581,7 +581,7 @@ src/rebotarm_moveit_demos/config/pick_place_rs.yaml
 | `pick_position` | 物体底面中心位置，坐标系为 `base_link` |
 | `pick_tcp_rpy` / `place_tcp_rpy` | 抓取和放置时的末端姿态 |
 | `object_dimensions` | MoveIt 场景中物体尺寸，单位 m |
-| `max_gripper_width` | 夹爪最大总开口，默认 `0.09m` |
+| `max_gripper_width` | 夹爪最大总行程，RS 默认 `0.10 m` |
 | `open_gripper_position` / `grasp_gripper_position` / `closed_gripper_position` | 仿真夹爪单侧关节位置 |
 | `hardware_open_gripper_position` / `hardware_closed_gripper_position` | 硬件夹爪电机开闭位置 |
 

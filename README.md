@@ -592,7 +592,7 @@ Common parameters:
 | `pick_position` | Object bottom-center position in `base_link` |
 | `pick_tcp_rpy` / `place_tcp_rpy` | TCP orientation for pick and place |
 | `object_dimensions` | Planning-scene object dimensions in meters |
-| `max_gripper_width` | Maximum total gripper opening, default `0.09m` |
+| `max_gripper_width` | Maximum total gripper travel, default `0.10 m` for RS |
 | `open_gripper_position` / `grasp_gripper_position` / `closed_gripper_position` | Simulated single-side gripper joint positions |
 | `hardware_open_gripper_position` / `hardware_closed_gripper_position` | Hardware gripper motor open/close positions |
 

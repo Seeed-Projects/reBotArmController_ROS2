@@ -56,3 +56,4 @@ models:
       gravity_compensation:
         kp: 2.0
         kd: 1.0
+        tau_scale: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

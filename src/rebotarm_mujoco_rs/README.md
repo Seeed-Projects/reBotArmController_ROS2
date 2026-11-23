@@ -1,12 +1,9 @@
 # rebotarm_mujoco_rs
 
-ROS 2 wrapper for the B601-RS MuJoCo model maintained at
-`LAN-GER/reBot-B601-RS-for-mujoco_sim`.
-
-The upstream repository currently has no LICENSE file, so its source and assets
-are not vendored into this package. `scripts/setup_rs_workspace.sh` checks out
-the pinned upstream revision under `rebotarm_ros2/third_party/`, which is ignored
-by this repository.
+The default grasp scene uses the local B601-RS MJCF with the measured RS inertials
+and 0–50 mm travel per finger. The loader shares the meshes in the installed RS
+description from `rebotarm_bringup`. The arm XML follows the
+[reBot-DevArm RS model](https://github.com/Seeed-Projects/reBot-DevArm/tree/main/Rebot_Arm_description/RS).
 
 The wrapper does not open SocketCAN or send hardware commands. It subscribes to
 ROS `JointState`, so the real arm continues to have a single owner: the
