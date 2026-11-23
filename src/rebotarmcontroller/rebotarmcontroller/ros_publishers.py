@@ -4,7 +4,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rebotarm_msgs.msg import ArmStatus, JointMotorState
 from sensor_msgs.msg import JointState
 
-_RS_GRIPPER_JOINT_LIMITS = (0.05, 0.0715)
+_RS_GRIPPER_JOINT_LIMITS = (0.05, 0.05)
 _DM_GRIPPER_JOINT_LIMITS = (0.05, -0.05)
 
 
